@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Offres</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+  <div id="global-admin-header"></div>
+  <main class="wrap">
+    <div class="hero">
+      <h2>Administration — Offres</h2>
+
+      <!-- Formulaire de création d'offre -->
+      <form method="post" action="/admin/offers/new" class="grid">
+        <input name="name" placeholder="Nom de l'offre (ex: Duo)" required>
+        <input name="nbr_ticket" type="number" placeholder="Personnes (ex: 2)" required>
+        <input name="prix" type="number" step="0.01" placeholder="Prix en euros (ex: 90.00)" required>
+        <button type="submit">Ajouter l'offre</button>
+      </form>
+
+      <hr style="margin: 20px 0;">
+      <h3>Offres existantes</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nom</th>
+            <th>Personnes</th>
+            <th>Prix</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!--OFFERS_ROWS-->
+        </tbody>
+      </table>
+
+      <hr style="margin: 20px 0;">
+      <h3>Statistiques par offre</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Offre</th>
+            <th>Pers./pack</th>
+            <th>Prix/pack</th>
+            <th>Billets vendus (packs)</th>
+            <th>Total personnes</th>
+            <th>Chiffre d'affaires</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!--STATS_ROWS-->
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script src="/static/admin-header.js"></script>
+
+</body>
+</html>

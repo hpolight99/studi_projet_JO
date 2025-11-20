@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Administration — Billets</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+  <div id="global-admin-header"></div>
+  <main class="wrap">
+    <div class="hero">
+      <h2>Administration — Billeterie <!--STATUS_LABEL--></h2>
+     
+      <!--
+      <p class="muted">
+        <a href="/admin">← Retour à l’administration des offres</a> |
+        <a href="/admin/users">Liste des utilisateurs</a>
+      </p>
+      -->
+      
+      <p class="muted">
+        <h2><!--STATUS_FILTERS--></h2>
+      </p>
+
+      <hr style="margin: 20px 0;">
+      
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Utilisateur</th>
+            <th>Offre</th>
+            <th>Pers.</th>
+            <th>Qté</th>
+            <th>Total</th>
+            <!-- <th>Status</th> -->
+            <!-- <th>Clé finale</th> -->
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!--ROWS_HERE-->
+        </tbody>
+      </table>
+
+      <div id="pagination">
+        <!--PAGINATION_HERE-->
+      </div>
+    </div>
+  </main>
+  <script src="/static/admin-header.js"></script>
+
+</body>
+</html>

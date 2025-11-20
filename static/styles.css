@@ -1,0 +1,230 @@
+/*------------------------------------------------------------------------------------------*/		/* Root */
+/* Root */
+:root {
+  --bg: #0b0f19;
+  --card: #121725;
+  --ink: #f3f5fa;
+  --muted: #aab2c0;
+  --accent: #2e77ff;
+  --ok: #17c964;
+  --warn: #f5a524;
+}
+/*------------------------------------------------------------------------------------------*/		/* Body */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial, sans-serif;
+  color: var(--ink);
+  background: linear-gradient(135deg, #0b0f19 0%, #0e1424 100%);
+}
+/*------------------------------------------------------------------------------------------*/		/* Header */
+
+/* ========== En-tête (Header) ========== */
+header {
+  /* Layout */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px;
+
+  /* Apparence */
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.hero {
+  /* Espacement & dimensions */
+  padding: 28px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  /* Couleurs & fond */
+  background: var(--card);
+
+  /* Ombre */
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+h1,
+h2 {
+  margin: 0 0 12px;
+}
+
+p {
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: var(--card);
+}
+
+.price {
+  font-weight: 700;
+}
+/*------------------------------------------------------------------------------------------*/		/* Formulaire */
+/* ========== Formulaires ========== */
+form {
+  display: grid;
+  gap: 10px;
+}
+
+/* ========== Champs de saisie ========== */
+input,
+select,
+button {
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+
+  background: #0f1424;
+  color: var(--ink);
+}
+
+/* ========== Boutons ========== */
+button {
+  background: var(--accent);
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Variante secondaire */
+button.secondary {
+  background: #1b2540;
+}
+
+/* ========== États / Feedback ========== */
+.ok {
+  color: var(--ok);
+}
+
+.warn {
+  color: var(--warn);
+}
+
+.muted {
+  color: var(--muted);
+}
+/*------------------------------------------------------------------------------------------*/		/* Header */
+/* ========== Pied de page ========== */
+footer {
+  padding: 24px;
+  text-align: center;
+  opacity: 0.6;
+}
+
+/* ========== Navigation ========== */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.nav .user-box {
+  margin-left: auto;         /* pousse le bloc email à droite */
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.nav .user-email {
+  font-size: 0.85em;
+  color: var(--muted);
+}
+
+/* ===================================  Nav ADMIN =================================== */
+.admin-nav {
+  display: flex;
+  gap: 12px;
+  width: 100%;      /* 🟢 AJOUT IMPORTANT */
+}
+
+/* Pour aligner les 2 derniers liens de droite */
+.admin-nav a:nth-last-child(2) {
+  margin-left: auto;
+}
+/* ========== Texte atténué ========== */
+.muted {
+  color: var(--muted);
+}
+
+/* ========== Tableaux ========== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+/*------------------------------------------------------------------------------------------*/		/* Offre */
+/* Sélection d'offre sans JS : radios cachés + label cliquable */
+.offer-select {
+  display: block;
+  cursor: pointer;
+}
+
+.offer-select input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.offer-card {
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.offer-select input[type="radio"]:checked + .offer-card {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(46,119,255,0.25), 0 10px 26px rgba(0,0,0,0.35);
+  transform: translateY(-2px);
+}
+
+/* Barre de validation qui apparaît quand une offre est sélectionnée */
+.offer-form .validate-bar {
+  display: none;
+  margin-top: 16px;
+
+}
+
+/* Le sélecteur :has() est supporté par Chrome/Edge/Safari récents.
+   Si tu veux compat maxi, laisse le bouton toujours visible (supprime display:none/has) */
+.offer-form:has(input[type="radio"]:checked) .validate-bar {
+  display: block;
+}
+/*------------------------------------------------------------------------------------------*/

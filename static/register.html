@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Inscription</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="wrap">
+    <div class="nav">
+      <a href="/">🏅 JO France</a>
+      <a href="/offers">Offres</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="card">
+      <h2>Créer un compte</h2>
+      <form method="post" action="/auth/register">
+        <input name="last_name" placeholder="Nom" required>
+        <input name="first_name" placeholder="Prénom" required>
+        <input name="email" type="email" placeholder="Email" required>
+
+        <!-- Mot de passe avec bulle native de validation -->
+        <input 
+          name="password" 
+          type="password" 
+          placeholder="Mot de passe (min 8, 1 chiffre)" 
+          required
+          minlength="8"
+          pattern="(?=.*\d).{8,}"
+          title="Le mot de passe doit comporter au moins 8 caractères et contenir au moins un chiffre."
+          oninvalid="this.setCustomValidity('Le mot de passe doit comporter au moins 8 caractères et contenir au moins un chiffre.')"
+          oninput="this.setCustomValidity('')"
+        >
+
+        <button type="submit">Créer mon compte</button>
+      </form>
+      <p class="muted">Déjà un compte ? <a href="/login">Connexion</a></p>
+    </div>
+  </main>
+</body>
+</html>
