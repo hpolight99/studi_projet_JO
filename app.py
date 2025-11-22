@@ -6,12 +6,32 @@ from fastapi.staticfiles import StaticFiles
 import psycopg2
 import psycopg2.extras
 #----------------------------------------------------------------------------------------------------------------------#
+"""
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/database_JO")
+"""
+#-------------------------------------------------------------#
+# Configuration base de données
+# - En local : postgres://postgres:postgres@localhost:5432/database_JO
+# - Sur Render : Render fournit DATABASE_URL dans les variables d'environnement
+#-------------------------------------------------------------#
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://postgres:postgres@localhost:5432/database_JO"
+)
+
 app = FastAPI(title="JO Reservation")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 #----------------------------------------------------------------------------------------------------------------------#
 def get_connection_database():
-	return psycopg2.connect(DATABASE_URL)
+    #Connexion à la base PostgreSQL.
+    # En local : utilise la valeur par défaut
+    # Sur Render : utilise DATABASE_URL fournie par Render
+	#-------------------------------------------------------------#
+	# Si Render a défini DATABASE_URL, on force SSL (classique sur Render)
+    if os.getenv("DATABASE_URL"):
+        return psycopg2.connect(DATABASE_URL, sslmode="require")
+    # Sinon, on est en local
+    return psycopg2.connect(DATABASE_URL)
 #----------------------------------------------------------------------------------------------------------------------#
 def get_current_user_id(request: Request) -> int | None:
 	"""Récupère l'id utilisateur à partir du cookie, ou None si non connecté / invalide."""
