@@ -15,23 +15,24 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localho
 # - Sur Render : Render fournit DATABASE_URL dans les variables d'environnement
 #-------------------------------------------------------------#
 DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/database_JO"
+	"DATABASE_URL",
+	"postgresql://postgres:postgres@localhost:5432/database_JO"
 )
 
 app = FastAPI(title="JO Reservation")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 #----------------------------------------------------------------------------------------------------------------------#
 def get_connection_database():
-    #Connexion à la base PostgreSQL.
-    # En local : utilise la valeur par défaut
-    # Sur Render : utilise DATABASE_URL fournie par Render
+	#Connexion à la base PostgreSQL.
+	# En local : utilise la valeur par défaut
+	# Sur Render : utilise DATABASE_URL fournie par Render
 	#-------------------------------------------------------------#
 	# Si Render a défini DATABASE_URL, on force SSL (classique sur Render)
-    if os.getenv("DATABASE_URL"):
-        return psycopg2.connect(DATABASE_URL, sslmode="require")
-    # Sinon, on est en local
-    return psycopg2.connect(DATABASE_URL)
+	# if os.getenv("DATABASE_URL"):
+		# return psycopg2.connect(DATABASE_URL, sslmode="require")
+	# Sinon, on est en local
+	# return psycopg2.connect(DATABASE_URL)
+	return psycopg2.connect(DATABASE_URL, sslmode="require")
 #----------------------------------------------------------------------------------------------------------------------#
 def get_current_user_id(request: Request) -> int | None:
 	"""Récupère l'id utilisateur à partir du cookie, ou None si non connecté / invalide."""
@@ -52,36 +53,36 @@ def check_password(password: str):
 	return len(password) >= 8 and any(charactere.isdigit() for charactere in password)
 #----------------------------------------------------------------------------------------------------------------------#
 def layout(body_html: str, title: str = "JO France", request: Request = None):
-    user_email = None
-    if request is not None:
-        user_email = request.cookies.get("user_email")
+	user_email = None
+	if request is not None:
+		user_email = request.cookies.get("user_email")
 
-    if user_email:
-        menu = f"""
-        <a href="/">🏅 JO France</a>
-        <a href="/offers">Offres</a>
-        <a href="/my/orders">Mes commandes</a>
-        <div class="user-box">
-          <a href="/logout">Déconnexion</a><br>
-          <span class="user-email">{user_email}</span>
-        </div>
-        """
-    else:
-        menu = """
-        <a href="/">🏅 JO France</a>
-        <a href="/offers">Offres</a>
-        <a href="/login">Connexion</a>
-        <a href="/register">Inscription</a>
-        """
+	if user_email:
+		menu = f"""
+		<a href="/">🏅 JO France</a>
+		<a href="/offers">Offres</a>
+		<a href="/my/orders">Mes commandes</a>
+		<div class="user-box">
+		  <a href="/logout">Déconnexion</a><br>
+		  <span class="user-email">{user_email}</span>
+		</div>
+		"""
+	else:
+		menu = """
+		<a href="/">🏅 JO France</a>
+		<a href="/offers">Offres</a>
+		<a href="/login">Connexion</a>
+		<a href="/register">Inscription</a>
+		"""
 
-    with open("static/layout.html", "r", encoding="utf-8") as f:
-        html = f.read()
+	with open("static/layout.html", "r", encoding="utf-8") as f:
+		html = f.read()
 
-    html = html.replace("<!--PAGE_TITLE-->", title)
-    html = html.replace("<!--MENU_HTML-->", menu)
-    html = html.replace("<!--BODY_HTML-->", body_html)
+	html = html.replace("<!--PAGE_TITLE-->", title)
+	html = html.replace("<!--MENU_HTML-->", menu)
+	html = html.replace("<!--BODY_HTML-->", body_html)
 
-    return HTMLResponse(html)
+	return HTMLResponse(html)
 #----------------------------------------------------------------------------------------------------------------------#
 @app.get("/", response_class=HTMLResponse)
 def home():
@@ -245,52 +246,52 @@ def create_offers_cards(offers):
 #----------------------------------------------------------------------------------------------------------------------#
 @app.get("/offers", response_class=HTMLResponse)
 def offers(request: Request):
-    # Récupération des offres
-    with get_connection_database() as database:
-        with database.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
-            cursor.execute("SELECT id, name, nbr_ticket, prix FROM offers ORDER BY id")
-            offers = cursor.fetchall()
+	# Récupération des offres
+	with get_connection_database() as database:
+		with database.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
+			cursor.execute("SELECT id, name, nbr_ticket, prix FROM offers ORDER BY id")
+			offers = cursor.fetchall()
 
-    # Génération des cartes HTML 
-    cards = create_offers_cards(offers)
-    cards_html = "".join(cards)
+	# Génération des cartes HTML 
+	cards = create_offers_cards(offers)
+	cards_html = "".join(cards)
 
-    # On ne met PAS de f-string ici pour éviter les problèmes avec le JavaScript
-    body = """
-    <h2>Choisissez votre offre</h2>
-    <form method="post" action="/my/cart" class="offer-form">
-      <div class="grid">
-        ___CARDS___
-      </div>
+	# On ne met PAS de f-string ici pour éviter les problèmes avec le JavaScript
+	body = """
+	<h2>Choisissez votre offre</h2>
+	<form method="post" action="/my/cart" class="offer-form">
+	  <div class="grid">
+		___CARDS___
+	  </div>
 
 	  <!-- La quantité personnalisée est désactivée.
-      <div class="card" style="margin-top:12px;">
-        <label for="quantity"><strong>Quantité :</strong></label>
-        <input type="number" id="quantity" name="quantity" value="1" min="1" style="max-width:80px;">
-      </div>
+	  <div class="card" style="margin-top:12px;">
+		<label for="quantity"><strong>Quantité :</strong></label>
+		<input type="number" id="quantity" name="quantity" value="1" min="1" style="max-width:80px;">
+	  </div>
 	  -->	
 
-      <div class="validate-bar">
-        <button id="addToCartButton" type="submit" disabled style="display:block;width:100%;">Mettre au panier</button>
-      </div>
-    </form>
+	  <div class="validate-bar">
+		<button id="addToCartButton" type="submit" disabled style="display:block;width:100%;">Mettre au panier</button>
+	  </div>
+	</form>
 
-    <script>
-      const radios = document.querySelectorAll("input[name='offer_id']");
-      const button = document.getElementById("addToCartButton");
+	<script>
+	  const radios = document.querySelectorAll("input[name='offer_id']");
+	  const button = document.getElementById("addToCartButton");
 
-      radios.forEach(function(r) {
-        r.addEventListener("change", function() {
-          const offerName = r.getAttribute("data-offer-name");
-          button.textContent = "Mettre au panier : " + offerName;
-          button.disabled = false;
-        });
-      });
-    </script>
-    """
+	  radios.forEach(function(r) {
+		r.addEventListener("change", function() {
+		  const offerName = r.getAttribute("data-offer-name");
+		  button.textContent = "Mettre au panier : " + offerName;
+		  button.disabled = false;
+		});
+	  });
+	</script>
+	"""
 
-    body = body.replace("___CARDS___", cards_html)
-    return layout(body, "Offres", request)
+	body = body.replace("___CARDS___", cards_html)
+	return layout(body, "Offres", request)
 #----------------------------------------------------------------------------------------------------------------------#
 @app.post("/offers/validate")
 def offers_validate(request: Request, offer_id: int | None = Form(None)):
@@ -352,173 +353,173 @@ def offers_validate(request: Request, offer_id: int | None = Form(None)):
 #----------------------------------------------------------------------------------------------------------------------#
 @app.get("/my/orders", response_class=HTMLResponse)
 def my_orders(request: Request):
-    user_id = request.cookies.get("user_id")
-    if not user_id:
-        return RedirectResponse(url="/login", status_code=303)
+	user_id = request.cookies.get("user_id")
+	if not user_id:
+		return RedirectResponse(url="/login", status_code=303)
 
-    cart_orders = []
-    paid_orders = []
+	cart_orders = []
+	paid_orders = []
 
-    with get_connection_database() as conn:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            # Toutes les commandes en "draft" = le panier
-            cur.execute("""
-                SELECT 
-                    o.id AS order_id,
-                    o.quantity,
-                    o.status,
-                    of.name AS offer_name, 
-                    of.nbr_ticket,
-                    of.prix
-                FROM orders AS o
-                JOIN offers AS of ON of.id = o.offer_id
-                WHERE o.user_id = %s AND o.status = 'draft'
-                ORDER BY o.id ASC
-            """, (int(user_id),))
-            cart_orders = cur.fetchall()
-            
-            # Commandes payées
-            cur.execute("""
-                SELECT 
-                    o.id AS order_id, 
-                    o.quantity, 
-                    o.status, 
-                    o.created_at,
-                    of.name AS offer_name,
-                    of.nbr_ticket,
-                    of.prix,
-                    p.final_key
-                FROM orders AS o
-                JOIN offers AS of ON of.id = o.offer_id
-                JOIN payments p ON p.order_id = o.id
-                WHERE o.user_id = %s AND o.status = 'paid'
-                ORDER BY o.id ASC
-            """, (int(user_id),))
-            paid_orders = cur.fetchall()
+	with get_connection_database() as conn:
+		with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+			# Toutes les commandes en "draft" = le panier
+			cur.execute("""
+				SELECT 
+					o.id AS order_id,
+					o.quantity,
+					o.status,
+					of.name AS offer_name, 
+					of.nbr_ticket,
+					of.prix
+				FROM orders AS o
+				JOIN offers AS of ON of.id = o.offer_id
+				WHERE o.user_id = %s AND o.status = 'draft'
+				ORDER BY o.id ASC
+			""", (int(user_id),))
+			cart_orders = cur.fetchall()
+			
+			# Commandes payées
+			cur.execute("""
+				SELECT 
+					o.id AS order_id, 
+					o.quantity, 
+					o.status, 
+					o.created_at,
+					of.name AS offer_name,
+					of.nbr_ticket,
+					of.prix,
+					p.final_key
+				FROM orders AS o
+				JOIN offers AS of ON of.id = o.offer_id
+				JOIN payments p ON p.order_id = o.id
+				WHERE o.user_id = %s AND o.status = 'paid'
+				ORDER BY o.id ASC
+			""", (int(user_id),))
+			paid_orders = cur.fetchall()
 
-    blocks = []
-    #------------------------------------------------------------------------------#
-    # Bloc "Panier"
-    if cart_orders:
-        rows = []
-        for o in cart_orders:
-            price_eur = o["prix"] or 0
-            qty = o["quantity"] or 1
-            total = price_eur * qty
-            rows.append(f"""
-              <tr>
-                <td>{o['offer_name']}</td>
-                <td>{o['nbr_ticket']}</td>
-                <td>{qty}</td>
-                <td>{total:.2f} €</td>
-                <td>
-                  <a href="/pay?order_id={o['order_id']}"><button>Payer</button></a>
-                </td>
-                <td>
-                  <form method="post" action="/payments/cancel" style="margin:0">
-                    <input type="hidden" name="order_id" value="{o['order_id']}">
-                    <button class="secondary" type="submit">Retirer</button>
-                  </form>
-                </td>
-              </tr>
-            """)
+	blocks = []
+	#------------------------------------------------------------------------------#
+	# Bloc "Panier"
+	if cart_orders:
+		rows = []
+		for o in cart_orders:
+			price_eur = o["prix"] or 0
+			qty = o["quantity"] or 1
+			total = price_eur * qty
+			rows.append(f"""
+			  <tr>
+				<td>{o['offer_name']}</td>
+				<td>{o['nbr_ticket']}</td>
+				<td>{qty}</td>
+				<td>{total:.2f} €</td>
+				<td>
+				  <a href="/pay?order_id={o['order_id']}"><button>Payer</button></a>
+				</td>
+				<td>
+				  <form method="post" action="/payments/cancel" style="margin:0">
+					<input type="hidden" name="order_id" value="{o['order_id']}">
+					<button class="secondary" type="submit">Retirer</button>
+				  </form>
+				</td>
+			  </tr>
+			""")
 
-        cart_block = f"""
-        <div class="hero">
-          <h2>Votre panier</h2>
-          <div class="card">
-            <table>
-              <thead>
-                <tr>
-                  <th>Offre</th>
-                  <th>Pers.</th>
-                  <th>Qté</th>
-                  <th>Total</th>
-                  <th colspan="2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {''.join(rows)}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        """
-    else:
-        cart_block = """
-        <div class="hero">
-          <h2>Votre panier</h2>
-          <div class="card">
-            <p class="muted">Aucun article dans votre panier.</p>
-            <a href="/offers"><button>Voir les offres</button></a>
-          </div>
-        </div>
-        """
+		cart_block = f"""
+		<div class="hero">
+		  <h2>Votre panier</h2>
+		  <div class="card">
+			<table>
+			  <thead>
+				<tr>
+				  <th>Offre</th>
+				  <th>Pers.</th>
+				  <th>Qté</th>
+				  <th>Total</th>
+				  <th colspan="2">Actions</th>
+				</tr>
+			  </thead>
+			  <tbody>
+				{''.join(rows)}
+			  </tbody>
+			</table>
+		  </div>
+		</div>
+		"""
+	else:
+		cart_block = """
+		<div class="hero">
+		  <h2>Votre panier</h2>
+		  <div class="card">
+			<p class="muted">Aucun article dans votre panier.</p>
+			<a href="/offers"><button>Voir les offres</button></a>
+		  </div>
+		</div>
+		"""
 
-    blocks.append(cart_block)
-    #------------------------------------------------------------------------------#
-    # Bloc billets payés
-    if paid_orders:
-        rows = []
-        for p in paid_orders:
-            price_eur = p["prix"] or 0
-            qty = p["quantity"] or 1
-            total = price_eur * qty
+	blocks.append(cart_block)
+	#------------------------------------------------------------------------------#
+	# Bloc billets payés
+	if paid_orders:
+		rows = []
+		for p in paid_orders:
+			price_eur = p["prix"] or 0
+			qty = p["quantity"] or 1
+			total = price_eur * qty
 
-            # Récupération / formatage de la date d'achat
-            purchase_dt = p.get("created_at")
-            if purchase_dt:
-                purchase_str = purchase_dt.strftime("%d/%m/%Y %H:%M")
-            else:
-                purchase_str = "-"
+			# Récupération / formatage de la date d'achat
+			purchase_dt = p.get("created_at")
+			if purchase_dt:
+				purchase_str = purchase_dt.strftime("%d/%m/%Y %H:%M")
+			else:
+				purchase_str = "-"
 
-            rows.append(f"""
-              <tr>
-                <td>{p['offer_name']}</td>
-                <td>{p['nbr_ticket']}</td>
-                <td>{qty}</td>
-                <td>{total:.2f} €</td>
-                <td><code style="font-size:.9em">{p['final_key']}</code></td>
-                <td>{purchase_str}</td>
-              </tr>
-            """)
+			rows.append(f"""
+			  <tr>
+				<td>{p['offer_name']}</td>
+				<td>{p['nbr_ticket']}</td>
+				<td>{qty}</td>
+				<td>{total:.2f} €</td>
+				<td><code style="font-size:.9em">{p['final_key']}</code></td>
+				<td>{purchase_str}</td>
+			  </tr>
+			""")
 
-        paid_block = f"""
-        <div class="hero" style="margin-top:16px">
-          <h2>Vos billets payés</h2>
-          <div class="card">
-            <table>
-              <thead>
-                <tr>
-                  <th>Offre</th>
-                  <th>Pers.</th>
-                  <th>Qté</th>
-                  <th>Total</th>
-                  <th>Clé finale</th>
-                  <th>Date d'achat</th>
-                </tr>
-              </thead>
-              <tbody>
-                {''.join(rows)}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        """
+		paid_block = f"""
+		<div class="hero" style="margin-top:16px">
+		  <h2>Vos billets payés</h2>
+		  <div class="card">
+			<table>
+			  <thead>
+				<tr>
+				  <th>Offre</th>
+				  <th>Pers.</th>
+				  <th>Qté</th>
+				  <th>Total</th>
+				  <th>Clé finale</th>
+				  <th>Date d'achat</th>
+				</tr>
+			  </thead>
+			  <tbody>
+				{''.join(rows)}
+			  </tbody>
+			</table>
+		  </div>
+		</div>
+		"""
 
-    else:
-        paid_block = """
-        <div class="hero" style="margin-top:16px">
-          <h2>Vos billets payés</h2>
-          <div class="card">
-            <p class="muted">Aucun billet payé pour le moment.</p>
-          </div>
-        </div>
-        """
+	else:
+		paid_block = """
+		<div class="hero" style="margin-top:16px">
+		  <h2>Vos billets payés</h2>
+		  <div class="card">
+			<p class="muted">Aucun billet payé pour le moment.</p>
+		  </div>
+		</div>
+		"""
 
-    blocks.append(paid_block)
+	blocks.append(paid_block)
    #------------------------------------------------------------------------------#
-    return layout("".join(blocks), "Mes commandes", request)
+	return layout("".join(blocks), "Mes commandes", request)
 #----------------------------------------------------------------------------------------------------------------------#
 @app.get("/pay", response_class=HTMLResponse)
 def pay_page(request: Request, order_id: int):
@@ -562,19 +563,19 @@ def pay_page(request: Request, order_id: int):
 
 	  <!-- Ligne de boutons "retour" + "supprimer" -->
 	  <div style="display:flex; justify-content:space-between; margin-top:15px;">
-	    <!-- Bouton gauche -->
-        <a href="/my/orders">
-          <button class="secondary" type="button">← Retour à mes commandes</button>
-        </a>
+		<!-- Bouton gauche -->
+		<a href="/my/orders">
+		  <button class="secondary" type="button">← Retour à mes commandes</button>
+		</a>
 
-        <!-- Bouton droite -->
-        <form method="post" action="/payments/cancel" style="margin:0;">
-          <input type="hidden" name="order_id" value="{order_id}">
-          <button class="secondary" type="submit" style="background:#d9534f; color:white;">
-            Supprimer cette commande du panier
-          </button>
-        </form>
-      </div>
+		<!-- Bouton droite -->
+		<form method="post" action="/payments/cancel" style="margin:0;">
+		  <input type="hidden" name="order_id" value="{order_id}">
+		  <button class="secondary" type="submit" style="background:#d9534f; color:white;">
+			Supprimer cette commande du panier
+		  </button>
+		</form>
+	  </div>
 	</div>
 	"""
 	return layout(body, "Paiement", request)
@@ -589,10 +590,10 @@ def pay_page(request: Request, order_id: int):
 #----------------------------------------------------------------------------------------------------------------------#
 @app.post("/payments/cancel")
 def payment_cancel(order_id: int = Form(...)):
-    with get_connection_database() as conn:
-        with conn.cursor() as cur:
-            cur.execute("UPDATE orders SET status='canceled' WHERE id=%s", (order_id,))
-    return RedirectResponse(url="/my/orders", status_code=303)
+	with get_connection_database() as conn:
+		with conn.cursor() as cur:
+			cur.execute("UPDATE orders SET status='canceled' WHERE id=%s", (order_id,))
+	return RedirectResponse(url="/my/orders", status_code=303)
 #----------------------------------------------------------------------------------------------------------------------#
 @app.post("/payments/confirm", response_class=HTMLResponse)
 def payment_confirm(request: Request, order_id: int = Form(...)):
@@ -646,277 +647,277 @@ def payment_confirm(request: Request, order_id: int = Form(...)):
 #----------------------------------------------------------------------------------------------------------------------#
 @app.get("/admin", response_class=HTMLResponse)
 def admin_page():
-    # 1) Récupérer les offres en base
-    with get_connection_database() as conn:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute("SELECT id, name, nbr_ticket, prix FROM offers ORDER BY id ASC")
-            offers = cur.fetchall()
+	# 1) Récupérer les offres en base
+	with get_connection_database() as conn:
+		with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+			cur.execute("SELECT id, name, nbr_ticket, prix FROM offers ORDER BY id ASC")
+			offers = cur.fetchall()
 
-            # 2) Récupérer aussi les stats par offre (billets vendus, personnes, CA)
-            cur.execute("""
-                SELECT 
-                    of.id,
-                    of.name,
-                    of.nbr_ticket,
-                    of.prix,
-                    COALESCE(SUM(o.quantity), 0) AS total_packs,
-                    COALESCE(SUM(o.quantity) * of.nbr_ticket, 0) AS total_persons,
-                    COALESCE(SUM(o.quantity * of.prix), 0) AS total_turnover
-                FROM offers of
-                LEFT JOIN orders o 
-                    ON o.offer_id = of.id
-                   AND o.status = 'paid'
-                GROUP BY of.id, of.name, of.nbr_ticket, of.prix
-                ORDER BY of.id ASC
-            """)
-            stats = cur.fetchall()
+			# 2) Récupérer aussi les stats par offre (billets vendus, personnes, CA)
+			cur.execute("""
+				SELECT 
+					of.id,
+					of.name,
+					of.nbr_ticket,
+					of.prix,
+					COALESCE(SUM(o.quantity), 0) AS total_packs,
+					COALESCE(SUM(o.quantity) * of.nbr_ticket, 0) AS total_persons,
+					COALESCE(SUM(o.quantity * of.prix), 0) AS total_turnover
+				FROM offers of
+				LEFT JOIN orders o 
+					ON o.offer_id = of.id
+				   AND o.status = 'paid'
+				GROUP BY of.id, of.name, of.nbr_ticket, of.prix
+				ORDER BY of.id ASC
+			""")
+			stats = cur.fetchall()
 
-    # 3) Construire UNIQUEMENT les lignes du tableau des offres
-    if offers:
-        offers_rows_html = ""
-        for o in offers:
-            offers_rows_html += f"""
-            <tr>
-              <td>{o['id']}</td>
-              <td>{o['name']}</td>
-              <td>{o['nbr_ticket']}</td>
-              <td>{o['prix']:.2f} €</td>
-              <td>
-                <form method="post" action="/admin/offers/delete" style="margin:0"
-                      onsubmit="return confirm('Supprimer cette offre ?');">
-                  <input type="hidden" name="offer_id" value="{o['id']}">
-                  <button type="submit" class="secondary">Supprimer</button>
-                </form>
-              </td>
-            </tr>
-            """
-    else:
-        # 5 colonnes visibles -> colspan=5
-        offers_rows_html = """
-        <tr>
-          <td colspan="5" class="muted">Aucune offre pour le moment.</td>
-        </tr>
-        """
+	# 3) Construire UNIQUEMENT les lignes du tableau des offres
+	if offers:
+		offers_rows_html = ""
+		for o in offers:
+			offers_rows_html += f"""
+			<tr>
+			  <td>{o['id']}</td>
+			  <td>{o['name']}</td>
+			  <td>{o['nbr_ticket']}</td>
+			  <td>{o['prix']:.2f} €</td>
+			  <td>
+				<form method="post" action="/admin/offers/delete" style="margin:0"
+					  onsubmit="return confirm('Supprimer cette offre ?');">
+				  <input type="hidden" name="offer_id" value="{o['id']}">
+				  <button type="submit" class="secondary">Supprimer</button>
+				</form>
+			  </td>
+			</tr>
+			"""
+	else:
+		# 5 colonnes visibles -> colspan=5
+		offers_rows_html = """
+		<tr>
+		  <td colspan="5" class="muted">Aucune offre pour le moment.</td>
+		</tr>
+		"""
 
-    # 4) Construire les lignes du tableau des stats
-    if stats:
-        stats_rows_html = ""
-        for s in stats:
-            total_packs = s["total_packs"] or 0
-            total_persons = s["total_persons"] or 0
-            ca = float(s["total_turnover"] or 0)
-            prix = float(s["prix"] or 0)
+	# 4) Construire les lignes du tableau des stats
+	if stats:
+		stats_rows_html = ""
+		for s in stats:
+			total_packs = s["total_packs"] or 0
+			total_persons = s["total_persons"] or 0
+			ca = float(s["total_turnover"] or 0)
+			prix = float(s["prix"] or 0)
 
-            stats_rows_html += f"""
-            <tr>
-              <td>{s['id']}</td>
-              <td>{s['name']}</td>
-              <td>{s['nbr_ticket']}</td>
-              <td>{prix:.2f} €</td>
-              <td>{total_packs}</td>
-              <td>{total_persons}</td>
-              <td>{ca:.2f} €</td>
-            </tr>
-            """
-    else:
-        # 7 colonnes visibles -> colspan=7
-        stats_rows_html = """
-        <tr>
-          <td colspan="7" class="muted">Aucune statistique disponible.</td>
-        </tr>
-        """
+			stats_rows_html += f"""
+			<tr>
+			  <td>{s['id']}</td>
+			  <td>{s['name']}</td>
+			  <td>{s['nbr_ticket']}</td>
+			  <td>{prix:.2f} €</td>
+			  <td>{total_packs}</td>
+			  <td>{total_persons}</td>
+			  <td>{ca:.2f} €</td>
+			</tr>
+			"""
+	else:
+		# 7 colonnes visibles -> colspan=7
+		stats_rows_html = """
+		<tr>
+		  <td colspan="7" class="muted">Aucune statistique disponible.</td>
+		</tr>
+		"""
 
-    # 5) Charger le HTML de base et remplacer les marqueurs
-    with open("static/admin.html", "r", encoding="utf-8") as fichier:
-        html = fichier.read()
+	# 5) Charger le HTML de base et remplacer les marqueurs
+	with open("static/admin.html", "r", encoding="utf-8") as fichier:
+		html = fichier.read()
 
-    html = html.replace("<!--OFFERS_ROWS-->", offers_rows_html)
-    html = html.replace("<!--STATS_ROWS-->", stats_rows_html)
+	html = html.replace("<!--OFFERS_ROWS-->", offers_rows_html)
+	html = html.replace("<!--STATS_ROWS-->", stats_rows_html)
 
-    return HTMLResponse(html)
+	return HTMLResponse(html)
 #----------------------------------------------------------------------------------------------------------------------#
 @app.post("/admin/offers/new")
 def admin_add_offer(name: str = Form(...), nbr_ticket: int = Form(...), prix: float = Form(...)):
 	with get_connection_database() as conn:
 		with conn.cursor() as cur:
 			cur.execute("INSERT INTO offers(name,nbr_ticket,prix) VALUES(%s,%s,%s)", (name, nbr_ticket, prix))
-    # On revient sur la page admin pour voir la liste à jour
+	# On revient sur la page admin pour voir la liste à jour
 	return RedirectResponse(url="/admin", status_code=303)
 #----------------------------------------------------------------------------------------------------------------------#
 @app.post("/admin/offers/delete")
 def admin_delete_offer(offer_id: int = Form(...)):
-    with get_connection_database() as conn:
-        with conn.cursor() as cur:
-            cur.execute("DELETE FROM offers WHERE id=%s", (offer_id,))
-    # On revient sur la page admin pour voir la liste à jour
-    return RedirectResponse(url="/admin", status_code=303)
+	with get_connection_database() as conn:
+		with conn.cursor() as cur:
+			cur.execute("DELETE FROM offers WHERE id=%s", (offer_id,))
+	# On revient sur la page admin pour voir la liste à jour
+	return RedirectResponse(url="/admin", status_code=303)
 #----------------------------------------------------------------------------------------------------------------------#
 @app.get("/admin/users/list", response_class=HTMLResponse)
 def admin_list_users(request: Request, page: int = 1):
-    page = max(1, page)
+	page = max(1, page)
 
-    page_size = 10
-    offset = (page - 1) * page_size
+	page_size = 10
+	offset = (page - 1) * page_size
 
-    with get_connection_database() as conn:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute("""
-                SELECT id, first_name, last_name, email
-                FROM users
-                ORDER BY id ASC
-                LIMIT %s OFFSET %s
-            """, (page_size + 1, offset))
-            rows = cur.fetchall()
+	with get_connection_database() as conn:
+		with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+			cur.execute("""
+				SELECT id, first_name, last_name, email
+				FROM users
+				ORDER BY id ASC
+				LIMIT %s OFFSET %s
+			""", (page_size + 1, offset))
+			rows = cur.fetchall()
 
-    has_next = len(rows) > page_size
-    users = rows[:page_size]
+	has_next = len(rows) > page_size
+	users = rows[:page_size]
 
-    # Lignes du tableau
-    if users:
-        html_rows = ""
-        for u in users:
-            html_rows += f"""
-            <tr>
-              <td>{u['id']}</td>
-              <td>{u['first_name']} {u['last_name']}</td>
-              <td>{u['email']}</td>
-            </tr>
-            """
-    else:
-        # 3 colonnes → colspan=3
-        html_rows = """
-        <tr>
-          <td colspan="3" class="muted">Aucun utilisateur trouvé.</td>
-        </tr>
-        """
+	# Lignes du tableau
+	if users:
+		html_rows = ""
+		for u in users:
+			html_rows += f"""
+			<tr>
+			  <td>{u['id']}</td>
+			  <td>{u['first_name']} {u['last_name']}</td>
+			  <td>{u['email']}</td>
+			</tr>
+			"""
+	else:
+		# 3 colonnes → colspan=3
+		html_rows = """
+		<tr>
+		  <td colspan="3" class="muted">Aucun utilisateur trouvé.</td>
+		</tr>
+		"""
 
-    # Pagination
-    nav = []
-    if page > 1:
-        nav.append(f'<a href="/admin/users/list?page={page-1}">← Page précédente</a>')
-    if has_next:
-        nav.append(f'<a href="/admin/users/list?page={page+1}">Page suivante →</a>')
+	# Pagination
+	nav = []
+	if page > 1:
+		nav.append(f'<a href="/admin/users/list?page={page-1}">← Page précédente</a>')
+	if has_next:
+		nav.append(f'<a href="/admin/users/list?page={page+1}">Page suivante →</a>')
 
-    if nav:
-        pagination_html = f"<div style='margin-top:12px; display:flex; gap:10px;'>{' '.join(nav)}</div>"
-    else:
-        pagination_html = ""
+	if nav:
+		pagination_html = f"<div style='margin-top:12px; display:flex; gap:10px;'>{' '.join(nav)}</div>"
+	else:
+		pagination_html = ""
 
-    # Charger le template HTML
-    with open("static/admin_users.html", "r", encoding="utf-8") as f:
-        html = f.read()
+	# Charger le template HTML
+	with open("static/admin_users.html", "r", encoding="utf-8") as f:
+		html = f.read()
 
-    # Remplacer les marqueurs
-    html = html.replace("<!--ROWS_HERE-->", html_rows)
-    html = html.replace("<!--PAGINATION_HERE-->", pagination_html)
+	# Remplacer les marqueurs
+	html = html.replace("<!--ROWS_HERE-->", html_rows)
+	html = html.replace("<!--PAGINATION_HERE-->", pagination_html)
 
-    return HTMLResponse(html)
+	return HTMLResponse(html)
 #----------------------------------------------------------------------------------------------------------------------#
 @app.get("/admin/orders", response_class=HTMLResponse)
 def admin_orders(request: Request, status: str = "paid", page: int = 1):
-    # Normaliser le statut
-    allowed_status = {"paid", "draft", "canceled"}
-    if status not in allowed_status:
-        status = "paid"
+	# Normaliser le statut
+	allowed_status = {"paid", "draft", "canceled"}
+	if status not in allowed_status:
+		status = "paid"
 
-    page = max(1, page)
-    page_size = 10
-    offset = (page - 1) * page_size
+	page = max(1, page)
+	page_size = 10
+	offset = (page - 1) * page_size
 
-    with get_connection_database() as conn:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute("""
-                SELECT 
-                    o.id AS order_id,
-                    o.quantity,
-                    o.status,
-                    o.created_at,
-                    u.email,
-                    of.name AS offer_name,
-                    of.nbr_ticket,
-                    of.prix,
-                    p.final_key
-                FROM orders o
-                JOIN users u ON u.id = o.user_id
-                JOIN offers of ON of.id = o.offer_id
-                LEFT JOIN payments p ON p.order_id = o.id
-                WHERE o.status = %s
-                ORDER BY o.id ASC
-                LIMIT %s OFFSET %s
-            """, (status, page_size + 1, offset))
-            rows = cur.fetchall()
+	with get_connection_database() as conn:
+		with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+			cur.execute("""
+				SELECT 
+					o.id AS order_id,
+					o.quantity,
+					o.status,
+					o.created_at,
+					u.email,
+					of.name AS offer_name,
+					of.nbr_ticket,
+					of.prix,
+					p.final_key
+				FROM orders o
+				JOIN users u ON u.id = o.user_id
+				JOIN offers of ON of.id = o.offer_id
+				LEFT JOIN payments p ON p.order_id = o.id
+				WHERE o.status = %s
+				ORDER BY o.id ASC
+				LIMIT %s OFFSET %s
+			""", (status, page_size + 1, offset))
+			rows = cur.fetchall()
 
-    has_next = len(rows) > page_size
-    orders = rows[:page_size]
+	has_next = len(rows) > page_size
+	orders = rows[:page_size]
 
-    # Construction des lignes du tableau
-    if orders:
-        html_rows = ""
-        for o in orders:
-            price_eur = o["prix"] or 0
-            qty = o["quantity"] or 1
-            total = price_eur * qty
-            # final_key = o.get("final_key") or "-"  # pour plus tard si tu veux la réactiver
-            dt = o.get("created_at")
-            date_str = dt.strftime("%d/%m/%Y %H:%M") if dt else "-"
+	# Construction des lignes du tableau
+	if orders:
+		html_rows = ""
+		for o in orders:
+			price_eur = o["prix"] or 0
+			qty = o["quantity"] or 1
+			total = price_eur * qty
+			# final_key = o.get("final_key") or "-"	 # pour plus tard si tu veux la réactiver
+			dt = o.get("created_at")
+			date_str = dt.strftime("%d/%m/%Y %H:%M") if dt else "-"
 
-            html_rows += f"""
-            <tr>
-              <td>{o['order_id']}</td>
-              <td>{o['email']}</td>
-              <td>{o['offer_name']}</td>
-              <td>{o['nbr_ticket']}</td>
-              <td>{qty}</td>
-              <td>{total:.2f} €</td>
-              <!-- <td>{o['status']}</td> -->
-              <!-- <td><code style="font-size:.7em">{o.get('final_key') or '-'}</code></td> -->
-              <td>{date_str}</td>
-            </tr>
-            """
-    else:
-        # 7 colonnes visibles => colspan=7
-        html_rows = """
-        <tr>
-          <td colspan="7" class="muted">Aucun billet pour ce statut.</td>
-        </tr>
-        """
+			html_rows += f"""
+			<tr>
+			  <td>{o['order_id']}</td>
+			  <td>{o['email']}</td>
+			  <td>{o['offer_name']}</td>
+			  <td>{o['nbr_ticket']}</td>
+			  <td>{qty}</td>
+			  <td>{total:.2f} €</td>
+			  <!-- <td>{o['status']}</td> -->
+			  <!-- <td><code style="font-size:.7em">{o.get('final_key') or '-'}</code></td> -->
+			  <td>{date_str}</td>
+			</tr>
+			"""
+	else:
+		# 7 colonnes visibles => colspan=7
+		html_rows = """
+		<tr>
+		  <td colspan="7" class="muted">Aucun billet pour ce statut.</td>
+		</tr>
+		"""
 
-    # Liens de filtre (paid / draft / canceled)
-    labels = {
-        "paid": "Payés",
-        "draft": "Brouillons",
-        "canceled": "Annulés",
-    }
-    status_links = []
-    for s, label in labels.items():
-        if s == status:
-            status_links.append(f"<strong>{label}</strong>")
-        else:
-            status_links.append(f'<a href="/admin/orders?status={s}">{label}</a>')
-    status_html = " | ".join(status_links)
+	# Liens de filtre (paid / draft / canceled)
+	labels = {
+		"paid": "Payés",
+		"draft": "Brouillons",
+		"canceled": "Annulés",
+	}
+	status_links = []
+	for s, label in labels.items():
+		if s == status:
+			status_links.append(f"<strong>{label}</strong>")
+		else:
+			status_links.append(f'<a href="/admin/orders?status={s}">{label}</a>')
+	status_html = " | ".join(status_links)
 
-    # Label pour le titre
-    status_label = labels.get(status, "").lower()
+	# Label pour le titre
+	status_label = labels.get(status, "").lower()
 
-    # Pagination
-    nav = []
-    if page > 1:
-        nav.append(f'<a href="/admin/orders?status={status}&page={page-1}">← Page précédente</a>')
-    if has_next:
-        nav.append(f'<a href="/admin/orders?status={status}&page={page+1}">Page suivante →</a>')
-    pagination_html = ""
-    if nav:
-        pagination_html = f"<div style='margin-top:12px; display:flex; gap:10px;'>{' '.join(nav)}</div>"
+	# Pagination
+	nav = []
+	if page > 1:
+		nav.append(f'<a href="/admin/orders?status={status}&page={page-1}">← Page précédente</a>')
+	if has_next:
+		nav.append(f'<a href="/admin/orders?status={status}&page={page+1}">Page suivante →</a>')
+	pagination_html = ""
+	if nav:
+		pagination_html = f"<div style='margin-top:12px; display:flex; gap:10px;'>{' '.join(nav)}</div>"
 
-    # Charger le template HTML
-    with open("static/admin_orders.html", "r", encoding="utf-8") as f:
-        html = f.read()
+	# Charger le template HTML
+	with open("static/admin_orders.html", "r", encoding="utf-8") as f:
+		html = f.read()
 
-    # Remplacer les marqueurs
-    html = html.replace("<!--STATUS_LABEL-->", f"({status_label})")
-    html = html.replace("<!--STATUS_FILTERS-->", status_html)
-    html = html.replace("<!--ROWS_HERE-->", html_rows)
-    html = html.replace("<!--PAGINATION_HERE-->", pagination_html)
+	# Remplacer les marqueurs
+	html = html.replace("<!--STATUS_LABEL-->", f"({status_label})")
+	html = html.replace("<!--STATUS_FILTERS-->", status_html)
+	html = html.replace("<!--ROWS_HERE-->", html_rows)
+	html = html.replace("<!--PAGINATION_HERE-->", pagination_html)
 
-    return HTMLResponse(html)
+	return HTMLResponse(html)
 #----------------------------------------------------------------------------------------------------------------------#
